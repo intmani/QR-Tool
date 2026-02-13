@@ -17,52 +17,9 @@ class QRToolGUI(tk.Tk):
         self.geometry("640x420")
         self.resizable(False, False)
 
-        self.clipboard_menu = self._create_clipboard_menu()
-        self._setup_clipboard_shortcuts()
-
         self._build_generate_section()
         self._build_scan_image_section()
         self._build_scan_camera_section()
-
-    def _create_clipboard_menu(self):
-        menu = tk.Menu(self, tearoff=False)
-        menu.add_command(label="Cut", command=lambda: self._clipboard_event("<<Cut>>"))
-        menu.add_command(label="Copy", command=lambda: self._clipboard_event("<<Copy>>"))
-        menu.add_command(label="Paste", command=lambda: self._clipboard_event("<<Paste>>"))
-        menu.add_separator()
-        menu.add_command(label="Select All", command=lambda: self._clipboard_event("<<SelectAll>>"))
-        return menu
-
-    def _setup_clipboard_shortcuts(self):
-        for event_name in ("<Control-c>", "<Control-C>", "<Control-v>", "<Control-V>", "<Control-x>", "<Control-X>", "<Control-a>", "<Control-A>"):
-            self.bind_all(event_name, self._on_clipboard_shortcut, add="+")
-
-    def _on_clipboard_shortcut(self, event):
-        widget = self.focus_get()
-        if not isinstance(widget, (tk.Entry, tk.Text)):
-            return
-
-        key = event.keysym.lower()
-        if key == "c":
-            widget.event_generate("<<Copy>>")
-        elif key == "v":
-            widget.event_generate("<<Paste>>")
-        elif key == "x":
-            widget.event_generate("<<Cut>>")
-        elif key == "a":
-            widget.event_generate("<<SelectAll>>")
-
-        return "break"
-
-    def _clipboard_event(self, virtual_event):
-        widget = self.focus_get()
-        if isinstance(widget, (tk.Entry, tk.Text)):
-            widget.event_generate(virtual_event)
-
-    def _show_clipboard_menu(self, event):
-        self.focus_set()
-        event.widget.focus_set()
-        self.clipboard_menu.tk_popup(event.x_root, event.y_root)
 
     def _build_generate_section(self):
         frame = tk.LabelFrame(self, text="Generate QR", padx=10, pady=10)
@@ -71,13 +28,11 @@ class QRToolGUI(tk.Tk):
         tk.Label(frame, text="Text / Link:").grid(row=0, column=0, sticky="w")
         self.data_entry = tk.Entry(frame, width=60)
         self.data_entry.grid(row=0, column=1, padx=8, pady=4, sticky="w")
-        self.data_entry.bind("<Button-3>", self._show_clipboard_menu)
 
         tk.Label(frame, text="Output filename:").grid(row=1, column=0, sticky="w")
         self.filename_entry = tk.Entry(frame, width=30)
         self.filename_entry.insert(0, "qr.png")
         self.filename_entry.grid(row=1, column=1, padx=8, pady=4, sticky="w")
-        self.filename_entry.bind("<Button-3>", self._show_clipboard_menu)
 
         tk.Button(frame, text="Generate", command=self.on_generate).grid(
             row=2, column=1, pady=(8, 0), sticky="w"
@@ -88,18 +43,15 @@ class QRToolGUI(tk.Tk):
         frame.pack(fill="x", padx=12, pady=8)
 
         self.image_path = tk.StringVar()
-        image_entry = tk.Entry(frame, textvariable=self.image_path, width=52)
-        image_entry.grid(
+        tk.Entry(frame, textvariable=self.image_path, width=52).grid(
             row=0, column=0, padx=(0, 8), pady=4
         )
-        image_entry.bind("<Button-3>", self._show_clipboard_menu)
         tk.Button(frame, text="Browse", command=self.browse_image).grid(row=0, column=1, pady=4)
         tk.Button(frame, text="Scan", command=self.on_scan_image).grid(row=0, column=2, padx=(8, 0), pady=4)
 
         tk.Label(frame, text="Result:").grid(row=1, column=0, sticky="nw", pady=(8, 0))
         self.scan_result = tk.Text(frame, width=62, height=4)
         self.scan_result.grid(row=2, column=0, columnspan=3, pady=(4, 0), sticky="w")
-        self.scan_result.bind("<Button-3>", self._show_clipboard_menu)
 
     def _build_scan_camera_section(self):
         frame = tk.LabelFrame(self, text="Scan QR from Camera", padx=10, pady=10)
